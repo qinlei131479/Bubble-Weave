@@ -132,3 +132,14 @@ async def test_get_async_redis_client_caches_and_closes_client(monkeypatch: pyte
     assert client_2 is fake_client
     assert create_calls == 1
     assert fake_client.closed is True
+
+
+def test_get_arq_redis_settings_decodes_percent_encoded_password():
+    pytest.importorskip("arq")
+    settings = redis_manager.get_arq_redis_settings(
+        RedisConfig(url="redis://:redis123%21%40%23@redis:6379/1")
+    )
+    assert settings.host == "redis"
+    assert settings.port == 6379
+    assert settings.database == 1
+    assert settings.password == "redis123!@#"

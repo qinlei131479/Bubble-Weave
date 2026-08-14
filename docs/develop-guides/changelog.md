@@ -10,6 +10,8 @@
 升级到 v0.7.2 后，管理员此前创建的 stdio MCP 会被禁用，也无法重新启用。请在详情页迁移为 SSE 或 Streamable HTTP，或直接删除；代码内置的系统 stdio MCP 不受影响。
 :::
 
+- 修复对话入队 Redis 认证失败：ARQ `RedisSettings.from_dsn` 不会解码 URL 密码，含 `!@#` 等特殊字符的 `REDIS_URL` 会把百分号编码原样拿去 AUTH；`get_arq_redis_settings` 现在会 unquote userinfo，与 redis-py `from_url` 对齐。
+- 对话侧 outputs/uploads 的 docx/pptx 预览复用工作区已有的 LibreOffice 转 PDF，xlsx 等其它类型仍走原二进制不支持逻辑。
 - 修复 MCP 管理接口可通过 stdio 启动任意本地进程的问题：用户配置仅允许 SSE/Streamable HTTP，运行时拒绝加载历史用户 stdio 记录，系统内置 stdio 的连接参数改为仅由代码维护；前端移除用户 stdio 配置入口，文档补充内置 stdio 的代码添加与验证方式。
 - 工作区新增只读历史对话文件入口 `agents/chats/{thread_id}`，网页以 `YYYY-MM-DD-title` 显示并按日期标题倒序浏览各 thread 的非空 uploads 与 outputs；空目录、无文件对话及 `large_tool_results`、`conversation_history` 等内部中间产物不展示。该目录由 API 虚拟映射，不创建符号链接或复制文件，也不进入当前会话 viewer 与 sandbox 挂载，避免 Agent 读取其他会话历史。面包屑中该目录固定显示为"历史对话"与目录列表一致，多选过滤改用只读路径集合避免逐项查找。
 - 收窄知识库状态边界：读取模型统一收口至 `read_models.py`；创建、列表、详情与更新由 Manager 统一返回 `KnowledgeBaseSummary/Detail`，Router 只转换 HTTP 响应；Manager 协调查询配置、主记录与聚合统计，Repository 在行锁内合并统计投影；executor 接收 frozen `KnowledgeBaseConfig`，负责类型资源、文档操作与类型专属一致性检测，不再写知识库主记录。

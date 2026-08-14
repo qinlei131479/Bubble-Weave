@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import unquote, urlparse, urlunparse
 
 DEFAULT_REDIS_URL = "redis://redis:6379/0"
 DEFAULT_REDIS_MAX_CONNECTIONS = 32
@@ -184,7 +184,15 @@ def get_arq_redis_settings(config: RedisConfig | None = None) -> Any:
         from arq.connections import RedisSettings
     except Exception as e:
         raise RuntimeError("arq dependency is required") from e
-    return RedisSettings.from_dsn(config.url)
+
+    settings = RedisSettings.from_dsn(config.url)
+    # ARQ from_dsn 直接用 urlparse，不会 unquote userinfo；redis-py from_url 会解码。
+    # 密码含 #/@ 时 URL 必须百分号编码，否则 # 会被当成 fragment。这里补齐解码。
+    if settings.password:
+        settings.password = unquote(settings.password)
+    if settings.username:
+        settings.username = unquote(settings.username)
+    return settings
 
 
 async def create_arq_redis_pool(config: RedisConfig | None = None) -> Any:
