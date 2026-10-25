@@ -67,3 +67,7 @@ cache
 frontend/package-lock.json
 docker/volumes
 docs/vibe
+
+# 后端运行时数据目录（按启动工作目录相对生成，可能出现在 backend/ 或 backend/server/ 下）
+backend/saves
+backend/server/saves
